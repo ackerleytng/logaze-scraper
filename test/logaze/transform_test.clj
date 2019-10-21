@@ -12,7 +12,21 @@
   (is (= "1TB"
          (t/hard-drive-size "1TB 5400RPM 2.5\" Hard Drive")))
   (is (= "512GB"
-         (t/hard-drive-size "512GB 5400RPM 2.5\" Hard Drive"))))
+         (t/hard-drive-size "512GB 5400RPM 2.5\" Hard Drive")))
+  (is (= "500GB"
+         (t/hard-drive-size "500G_7MM_5400RPM"))))
+
+(deftest hard-drive-type-test
+  (is (= "HDD"
+         (t/hard-drive-type "1TB 5400RPM 2.5\" Hard Drive")))
+  (is (= "HDD"
+         (t/hard-drive-type "512GB 5400RPM 2.5\" Hard Drive")))
+  (is (= "SSD"
+         (t/hard-drive-type "512GB SATA 2.5\" Solid State Drive")))
+  (is (= "eMMC"
+         (t/hard-drive-type "128GB eMMC (embedded Multi Media Card) flash memory")))
+  (is (= "HDD"
+         (t/hard-drive-type "500GB 7200RPM Serial ATA"))))
 
 (deftest processor-range-test
   (is (= "i3"
@@ -20,12 +34,28 @@
   (is (= "Ryzen 5"
          (t/processor-range "AMD Ryzen 5 2500U Processor (4C, 2.0 / 3.6GHz, 2MB)")))
   (is (= "Celeron"
-         (t/processor-range "Intel® Celeron® Processor 3865U (2M Cache, 1.80 GHz)"))))
+         (t/processor-range "Intel® Celeron® Processor 3865U (2M Cache, 1.80 GHz)")))
+  (is (= "Pentium"
+         (t/processor-range "Intel® Pentium® Silver N5000 Processor (4M Cache, up to 2.70 GHz)")))
+  (is (= "A6"
+         (t/processor-range "AMD A6-9500B APU Processor")))
+  (is (= "Ryzen R3"
+         (t/processor-range "AMD Ryzen R3-2200U Processor (2C, 2.5 / 3.4 Ghz, 1MB)")))
+  (is (= "PRO A10"
+         (t/processor-range "AMD PRO A10-9700B Processor"))))
+
+(deftest fix-resolution-test
+  (is (= "1920x1200" (t/fix-resolution "1920 x 1200")))
+  (is (= "10.1 WUXGA (1920x1200) IPS Multi-touch w/ Front 1.2mp and Rear 5.0mp Camera"
+         (t/fix-resolution
+          "10.1 WUXGA (1920 x 1200) IPS Multi-touch w/ Front 1.2mp and Rear 5.0mp Camera")))
+  (let [desc "15.6\" HD (1366x768) anti-glare, LED backlight w/720p Camera"]
+    (is (= desc (t/fix-resolution desc)))))
 
 (deftest regression-test
   (is
    (=
-    {:keyboard "US English"
+    {:keyboard "Keyboard - US English"
      :processor-cache "4M"
      :hard-drive-size "1TB"
      :wireless "11AC 1x1 Wi-Fi + Bluetooth combo"
@@ -51,7 +81,7 @@
      :camera "720p HD"
      :memory-soldered true
      :part-number "81DJ0007US"
-     :hard-drive-type "Hard Drive"
+     :hard-drive-type "HDD"
      :processor "Intel® Core™ i3-8130U Processor (4M Cache, up to 3.40 GHz)"
      :price 305.49
      :ac-adapter "45 watt AC"
