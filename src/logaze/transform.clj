@@ -15,7 +15,8 @@
     (second matches)))
 
 (defn processor-range [processor-str]
-  (when-let [matches (re-find #"(i[3579]|Ryzen R?\d+|Celeron|Pentium|A\d+|PRO A\d+)-?" processor-str)]
+  (when-let [matches (re-find #"(i[3579]|Ryzen R?\d+|Celeron|Atom|Pentium|A\d+|PRO A\d+)-?"
+                              processor-str)]
     (second matches)))
 
 (defn hard-drive-size [hard-drive-str]
@@ -44,8 +45,8 @@
       (extract :orig-price :orig-price price->float)
       (extract :price :price price->float)
       (extract :model :refurbished #(boolean (re-find #"(?i)refurbished" %)))
-      (extract :display-type :screen-size fix-resolution)
-      (extract :display-type :screen-size #(edn/read-string (second (re-find #"(\d{2}\.?\d?)\"" %))))
+      (extract :display-type :display-type fix-resolution)
+      (extract :display-type :screen-size #(edn/read-string (second (re-find #"(\d{2}\.?\d?)" %))))
       (extract :display-type :screen-has-ips #(boolean (re-find #"IPS" %)))
       (extract :display-type :screen-supports-touch #(boolean (re-find #"touch" %)))
       (extract :display-type :resolution #(second (re-find #"(\d+x\d+)" %)))
