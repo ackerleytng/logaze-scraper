@@ -20,11 +20,12 @@
     (second matches)))
 
 (defn hard-drive-size [hard-drive-str]
-  (when-let [matches (re-find #"(?i)(\d+[GT])B?" hard-drive-str)]
+  (when-let [matches (re-find #"(?i)([\d\.]+[GT])B?" hard-drive-str)]
     (str (second matches) "B")))
 
 (defn hard-drive-type [s]
   (cond
+    (re-find #"(?i)and.*drives" s) "Multi"
     (re-find #"(?i)hard drive" s) "HDD"
     (re-find #"(?i)solid state drive" s) "SSD"
     (re-find #"(?i)embedded multi media card" s) "eMMC"
@@ -39,12 +40,20 @@
   [display-type-str]
   (string/replace display-type-str #"(\d+)\s+x\s+(\d+)" "$1x$2"))
 
+(defn product-type [s]
+  (when-let [matches (re-find #"(?i)(new|refurbished|scratch and dent)" s)]
+    (second matches)))
+
+(defn clean-model [s]
+  (string/replace s #"(?i)\s*-\s*(new|refurbished|scratch and dent)" ""))
+
 (defn transform-attributes [attrs]
   (-> attrs
       (extract :part-number :part-number #(string/replace % #"Part Number:  " ""))
       (extract :orig-price :orig-price price->float)
       (extract :price :price price->float)
-      (extract :model :refurbished #(boolean (re-find #"(?i)refurbished" %)))
+      (extract :model :product-type product-type)
+      (extract :model :model clean-model)
       (extract :display-type :display-type fix-resolution)
       (extract :display-type :screen-size #(edn/read-string (second (re-find #"(\d{2}\.?\d?)" %))))
       (extract :display-type :screen-has-ips #(boolean (re-find #"IPS" %)))
