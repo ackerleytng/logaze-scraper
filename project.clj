@@ -1,4 +1,5 @@
 (defproject logaze "0.1.0-SNAPSHOT"
+  :uberjar-name "logaze.jar"
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [ring "1.7.1"]
@@ -7,4 +8,5 @@
                  [cheshire "5.9.0"]
                  [org.clojure/core.async "0.4.500"]]
   :ring {:handler logaze.core/handler}
-  :plugins [[lein-ring "0.12.5"]])
+  :plugins [[lein-ring "0.12.5"]]
+  :profiles {:uberjar {:aot :all}})

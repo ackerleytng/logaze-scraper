@@ -1,1 +1,1 @@
-web: lein ring server-headless $PORT
+web: java -jar target/logaze.jar
