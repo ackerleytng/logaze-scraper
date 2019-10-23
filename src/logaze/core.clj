@@ -4,7 +4,8 @@
             [logaze.transform :as t]
             [logaze.jsonbin :as jsonbin]
             [clojure.set :refer [union]]
-            [clojure.core.async :refer [go]]))
+            [clojure.core.async :refer [go]]
+            [ring.middleware.cors :refer [wrap-cors]]))
 
 (defn do-scraping []
   (let [links
@@ -22,12 +23,18 @@
     (do (jsonbin/post transformed)
         (println "Posted to jsonbin"))))
 
-(defn handler [request]
+(defn scrape-handler [request]
   (do
     (go (do-scraping))
     {:status 200
      :headers {"Content-Type" "text/plain"}
      :body "Done!"}))
+
+(def handler
+  (wrap-cors
+   scrape-handler
+   :access-control-allow-origin [#"(localhost|ackerleytng.github.io/logaze)"]
+   :access-control-allow-methods [:get]))
 
 (comment
   (def links
