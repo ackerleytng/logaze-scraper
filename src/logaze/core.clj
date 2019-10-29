@@ -34,7 +34,7 @@
   (wrap-cors
    scrape-handler
    :access-control-allow-origin [#"http://localhost:?\d*/?"
-                                 #"https://ackerleytng.github.io/logaze/?"]
+                                 #"https://ackerleytng.github.io/?"]
    :access-control-allow-methods [:get]))
 
 (comment
