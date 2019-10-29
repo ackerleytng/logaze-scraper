@@ -6,7 +6,9 @@
   (is (= "4M"
          (t/processor-cache "Intel® Core™ i3-8130U Processor (4M Cache, up to 3.40 GHz)")))
   (is (= "2M"
-         (t/processor-cache "AMD Ryzen 5 2500U Processor (4C, 2.0 / 3.6GHz, 2MB)"))))
+         (t/processor-cache "AMD Ryzen 5 2500U Processor (4C, 2.0 / 3.6GHz, 2MB)")))
+  (is (= "12M"
+         (t/processor-cache "Intel® Xeon® E-2176M Processor (12M Cache, up to 4.40 GHz)"))))
 
 (deftest hard-drive-size-test
   (is (= "1TB"

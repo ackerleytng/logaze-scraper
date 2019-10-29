@@ -11,7 +11,7 @@
 ;; Individual functions
 
 (defn processor-cache [processor-str]
-  (when-let [matches (re-find #"(?i)(\d+M)B?" processor-str)]
+  (when-let [matches (re-find #"(?i)\(.*?(\d+M)B?" processor-str)]
     (second matches)))
 
 (defn processor-range [processor-str]
