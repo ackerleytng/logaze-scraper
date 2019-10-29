@@ -33,6 +33,7 @@
              (re-find #"(?i)(\d+) products found")
              second
              Integer.)]
+    (println total-results-div)
     (int (Math/ceil (/ n-results products-per-page)))))
 
 (defn resource
