@@ -45,6 +45,8 @@
          (t/processor-range "AMD A6-9500B APU Processor")))
   (is (= "Atom"
          (t/processor-range "Intel® Atom™ x7-Z8750 Processor(2M Cache, up to 2.56 GHz)")))
+  (is (= "Xeon"
+         (t/processor-range "Intel® Xeon® E-2176M Processor (12M Cache, up to 4.40 GHz)")))
   (is (= "Ryzen R3"
          (t/processor-range "AMD Ryzen R3-2200U Processor (2C, 2.5 / 3.4 Ghz, 1MB)")))
   (is (= "PRO A10"

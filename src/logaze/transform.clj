@@ -15,7 +15,7 @@
     (second matches)))
 
 (defn processor-range [processor-str]
-  (when-let [matches (re-find #"(i[3579]|Ryzen R?\d+|Celeron|Atom|Pentium|A\d+|PRO A\d+)-?"
+  (when-let [matches (re-find #"(i[3579]|Ryzen R?\d+|Celeron|Xeon|Atom|Pentium|A\d+|PRO A\d+)-?"
                               processor-str)]
     (second matches)))
 
