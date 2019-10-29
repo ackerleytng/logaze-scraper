@@ -18,6 +18,23 @@
         {:query-params q-params
          :throw-exceptions false}))))))
 
+(defn num-product-pages
+  "Using the first product page, grab the number of products found and
+  then determine how many pages there should be"
+  []
+  (let [products-per-page 8
+        res (resource-page 0)
+        total-results-div (first (html/select res [:div.totalResults]))
+        n-results
+        (->> total-results-div
+             :content
+             (filter string?)
+             (apply str)
+             (re-find #"(?i)(\d+) products found")
+             second
+             Integer.)]
+    (int (Math/ceil (/ n-results products-per-page)))))
+
 (defn resource
   "Gets resource at url"
   [url]

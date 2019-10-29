@@ -9,9 +9,13 @@
 
 (defn do-scraping []
   (let [links
-        (->> (range)
+        (->> (range (s/num-product-pages))
              (pmap (comp s/laptop-links s/resource-page))
-             (take-while seq)
+             ;; take-while should work on a lazy infinite range,
+             ;;   but the lenovo site seems to be breaking because of a certain product
+             ;;   with price ~$1000 (it keeps saying "The page you are looking for
+             ;;   cannot be found.") hence this temporary fix
+             ;; (take-while seq)
              (apply union)
              (map s/complete-laptop-link))
         extracted
