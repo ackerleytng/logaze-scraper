@@ -14,7 +14,7 @@ This app has three parts
 
 + Scraper (this repo)
 + [Frontend](https://github.com/ackerleytng/logaze)
-+ Result cache, hosted at [jsonbin.io](https://jsonbin.io/)
++ Result cache, hosted at [jsonblob.com](https://jsonblob.com/)
 
 See details in `logaze`'s README at https://github.com/ackerleytng/logaze.
 

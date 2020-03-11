@@ -2,7 +2,7 @@
   (:require [logaze.scrape :as s]
             [logaze.extract :as e]
             [logaze.transform :as t]
-            [logaze.jsonbin :as jsonbin]
+            [logaze.storage :as storage]
             [clojure.set :refer [union]]
             [clojure.core.async :refer [go]]
             [ring.middleware.cors :refer [wrap-cors]]))
@@ -24,8 +24,8 @@
         (pmap (fn [e url] (assoc e :url url)) extracted links)
         in-stock (filter :model data)
         transformed (map t/transform-attributes in-stock)]
-    (do (jsonbin/post transformed)
-        (println "Posted to jsonbin"))))
+    (do (storage/post transformed)
+        (println "Posted to storage"))))
 
 (defn scrape-handler [request]
   (do
