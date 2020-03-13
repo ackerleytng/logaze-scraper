@@ -7,6 +7,10 @@
             [clojure.core.async :refer [go]]
             [ring.middleware.cors :refer [wrap-cors]]))
 
+(defn in-stock? [d]
+  (let [stock-status (:stock-status d)]
+    (not (or (nil? stock-status) (= stock-status "Out of Stock")))))
+
 (defn do-scraping []
   (let [links
         (->> (range (s/num-product-pages))
@@ -22,7 +26,7 @@
         (pmap (comp e/extract s/resource) links)
         data
         (pmap (fn [e url] (assoc e :url url)) extracted links)
-        in-stock (filter :model data)
+        in-stock (filter in-stock?  data)
         transformed (map t/transform-attributes in-stock)]
     (do (storage/post transformed)
         (println "Posted to storage"))))
@@ -43,20 +47,30 @@
 
 (comment
   (def links
-    (->> (range)
+    (->> (range (s/num-product-pages))
          (map (comp s/laptop-links s/resource-page))
-         (take-while seq)
+         ;; (take-while seq)
          (apply union)
          (map s/complete-laptop-link)))
 
   (def extracted
-    (->> (repeatedly 5 #(rand-nth links))
+    (->> (rand-nth links)
+         s/resource
+         e/extract))
 
-         (filter :model)))
+  (def extracted
+    (->> "https://www.lenovo.com/us/en/outletus/laptops/thinkpad/thinkpad-x-series/X1-Carbon-Gen-7/p/20QDCTO1WW-PF1YRGC7"
+         s/resource
+         e/extract))
 
-  (map (juxt t/transform-attributes identity) extracted)
+  (def extracted
+    (->> "https://www.lenovo.com/us/en/outletus/laptops/thinkpad/thinkpad-e-series/E490s/p/20NGCTR1WW-PF1S6DNH"
+         s/resource
+         e/extract))
 
-  (t/transform-attributes (second extracted))
+  (def extracted-many (map (comp e/extract s/resource) links))
+
+  (set (filter #(nil? (:stock-status %)) extracted-many))
 
   (do-scraping)
   )
