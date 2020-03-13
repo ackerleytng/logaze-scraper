@@ -42,7 +42,7 @@
   (println (str "resource " url))
   (html/html-resource
    (java.io.StringReader.
-    (:body (client/get url)))))
+    (:body (client/get url {:throw-exceptions false})))))
 
 (defn laptop-links
   "Given a resource res of a page with the grid of laptops, like
