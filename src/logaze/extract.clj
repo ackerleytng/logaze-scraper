@@ -18,6 +18,13 @@
 (defn part-number [res]
   {:part-number (clean-content (html/select res [:div.partNumber]))})
 
+(defn stock-status [res]
+  (let [c (clean-content
+           (html/select
+            res
+            [:div.pricingSummary-shipping.deliveryTimeItemForsessionStorage :span.rci-msg]))]
+    {:stock-status c}))
+
 ;; Relating to prices
 
 (defn- price-type [pricing-info]
@@ -63,4 +70,5 @@
    (apply merge (attributes res))
    (prices res)
    (model res)
-   (part-number res)))
+   (part-number res)
+   (stock-status res)))
