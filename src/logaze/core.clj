@@ -12,24 +12,25 @@
     (not (or (nil? stock-status) (= stock-status "Out of Stock")))))
 
 (defn do-scraping []
-  (let [links
-        (->> (range (s/num-product-pages))
-             (pmap (comp s/laptop-links s/resource-page))
-             ;; take-while should work on a lazy infinite range,
-             ;;   but the lenovo site seems to be breaking because of a certain product
-             ;;   with price ~$1000 (it keeps saying "The page you are looking for
-             ;;   cannot be found.") hence this temporary fix
-             ;; (take-while seq)
-             (apply union)
-             (map s/complete-laptop-link))
-        extracted
-        (pmap (comp e/extract s/resource) links)
-        data
-        (pmap (fn [e url] (assoc e :url url)) extracted links)
-        in-stock (filter in-stock?  data)
-        transformed (map t/transform-attributes in-stock)]
-    (do (storage/post transformed)
-        (println "Posted to storage"))))
+  (when-let [num-product-pages (s/num-product-pages)]
+    (let [links
+          (->> (range num-product-pages)
+               (pmap (comp s/laptop-links s/resource-page))
+               ;; take-while should work on a lazy infinite range,
+               ;;   but the lenovo site seems to be breaking because of a certain product
+               ;;   with price ~$1000 (it keeps saying "The page you are looking for
+               ;;   cannot be found.") hence this temporary fix
+               ;; (take-while seq)
+               (apply union)
+               (map s/complete-laptop-link))
+          extracted
+          (pmap (comp e/extract s/resource) links)
+          data
+          (pmap (fn [e url] (assoc e :url url)) extracted links)
+          in-stock (filter in-stock?  data)
+          transformed (map t/transform-attributes in-stock)]
+      (do (storage/post transformed)
+          (println "Posted to storage")))))
 
 (defn scrape-handler [request]
   (do

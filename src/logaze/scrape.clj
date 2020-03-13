@@ -23,18 +23,18 @@
   then determine how many pages there should be"
   []
   (let [products-per-page 8
-        res (resource-page 0)
-        total-results-div (first (html/select res [:div.totalResults]))
-        n-results
-        (->> total-results-div
-             :content
-             (filter string?)
-             (apply str)
-             (re-find #"(?i)(\d+) products found")
-             second
-             Integer.)]
-    (println total-results-div)
-    (int (Math/ceil (/ n-results products-per-page)))))
+        res (resource-page 0)]
+    (if-let [total-results-div (first (html/select res [:div.totalResults]))]
+      (let [n-results
+            (->> total-results-div
+                 :content
+                 (filter string?)
+                 (apply str)
+                 (re-find #"(?i)(\d+) products found")
+                 second
+                 Integer.)]
+        (int (Math/ceil (/ n-results products-per-page))))
+      (println "Can't get totalResults - maybe we're being blocked"))))
 
 (defn resource
   "Gets resource at url"
