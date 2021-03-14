@@ -15,9 +15,10 @@
     (second matches)))
 
 (defn processor-range [processor-str]
-  (when-let [matches (re-find #"(i[3579]|Ryzen R?\d+|Celeron|Xeon|Atom|Pentium|A\d+|PRO A\d+)-?"
-                              processor-str)]
-    (second matches)))
+  (let [cleaned (string/replace processor-str #"[^A-Za-z0-9\- ]" "")]
+    (when-let [matches (re-find #"(i[3579]|Ryzen R?\d+|Celeron|Xeon|Atom|Pentium|A\d+|PRO A\d+|R\d)-?"
+                                cleaned)]
+      (second matches))))
 
 (defn hard-drive-size [hard-drive-str]
   (when-let [matches (re-find #"(?i)([\d\.]+[GT])B?" hard-drive-str)]
@@ -27,7 +28,7 @@
   (cond
     (re-find #"(?i)and.*drives" s) "Multi"
     (re-find #"(?i)hard drive" s) "HDD"
-    (re-find #"(?i)solid state drive" s) "SSD"
+    (re-find #"(?i)solid state" s) "SSD"
     (re-find #"(?i)embedded multi media card" s) "eMMC"
     (re-find #"RPM" s) "HDD"))
 

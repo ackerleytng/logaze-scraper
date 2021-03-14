@@ -29,6 +29,8 @@
          (t/hard-drive-type "512GB 5400RPM 2.5\" Hard Drive")))
   (is (= "SSD"
          (t/hard-drive-type "512GB SATA 2.5\" Solid State Drive")))
+  (is (= "SSD"
+         (t/hard-drive-type "256GB Solid State M.2 Drive")))
   (is (= "eMMC"
          (t/hard-drive-type "128GB eMMC (embedded Multi Media Card) flash memory")))
   (is (= "HDD"
@@ -39,6 +41,12 @@
          (t/processor-range "Intel® Core™ i3-8130U Processor (4M Cache, up to 3.40 GHz)")))
   (is (= "Ryzen 5"
          (t/processor-range "AMD Ryzen 5 2500U Processor (4C, 2.0 / 3.6GHz, 2MB)")))
+  (is (= "Ryzen 5"
+         (t/processor-range "AMD Ryzen™ 5 PRO 3500U Mobile Processor")))
+  (is (= "R7"
+         (t/processor-range "R7 PRO 4700U Processor")))
+  (is (= "R5"
+         (t/processor-range "AMD R5 PRO 3500 Processor")))
   (is (= "Celeron"
          (t/processor-range "Intel® Celeron® Processor 3865U (2M Cache, 1.80 GHz)")))
   (is (= "Pentium"
