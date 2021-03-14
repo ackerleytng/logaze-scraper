@@ -33,11 +33,11 @@
        :data-pricetypevalue))
 
 (defn- list-price? [pricing-info]
-  (if-let [price-type (price-type pricing-info)]
+  (when-let [price-type (price-type pricing-info)]
     (string/includes? price-type "LISTPRICE")))
 
 (defn- web-price? [pricing-info]
-  (if-let [price-type (price-type pricing-info)]
+  (when-let [price-type (price-type pricing-info)]
     (string/includes? price-type "WEBPRICE")))
 
 (defn prices [res]

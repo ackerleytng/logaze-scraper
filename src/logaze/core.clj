@@ -4,6 +4,7 @@
             [logaze.transform :as t]
             [logaze.storage :as storage]
             [clojure.set :refer [union]]
+            [clojure.string :as string]
             [clojure.core.async :refer [go]]
             [ring.middleware.cors :refer [wrap-cors]]))
 
@@ -27,17 +28,16 @@
           (pmap (comp e/extract s/resource) links)
           data
           (pmap (fn [e url] (assoc e :url url)) extracted links)
-          in-stock (filter in-stock?  data)
+          in-stock (filter in-stock? data)
           transformed (map t/transform-attributes in-stock)]
-      (do (storage/post transformed)
-          (println "Posted to storage")))))
+      (storage/post transformed)
+      (println "Posted to storage"))))
 
-(defn scrape-handler [request]
-  (do
-    (go (do-scraping))
-    {:status 200
-     :headers {"Content-Type" "text/plain"}
-     :body "Done!"}))
+(defn scrape-handler [_request]
+  (go (do-scraping))
+  {:status 200
+   :headers {"Content-Type" "text/plain"}
+   :body "Done!"})
 
 (def handler
   (wrap-cors
@@ -54,13 +54,10 @@
          (apply union)
          (map s/complete-laptop-link)))
 
-  (def extracted
-    (->> (rand-nth links)
-         s/resource
-         e/extract))
+  (first (filter #(string/includes? % "E14") links))
 
-  (def extracted
-    (->> "https://www.lenovo.com/us/en/outletus/laptops/thinkpad/thinkpad-x-series/X1-Carbon-Gen-7/p/20QDCTO1WW-PF1YRGC7"
+  (def extracted-random
+    (->> (rand-nth links)
          s/resource
          e/extract))
 
@@ -69,7 +66,10 @@
          s/resource
          e/extract))
 
-  (def extracted-many (map (comp e/extract s/resource) links))
+  (def extracted-many (doall (map (fn [l]
+                                    (assoc ((comp e/extract s/resource) l)
+                                           :url l))
+                                  links)))
 
   (set (filter #(nil? (:stock-status %)) extracted-many))
 
