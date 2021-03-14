@@ -7,7 +7,8 @@
                  [enlive "1.1.6"]
                  [clj-http "3.10.0"]
                  [cheshire "5.9.0"]
-                 [org.clojure/core.async "0.4.500"]]
+                 [org.clojure/core.async "0.4.500"]
+                 [slingshot "0.12.2"]]
   :ring {:handler logaze.core/handler}
   :plugins [[lein-ring "0.12.5"]]
   :profiles {:uberjar {:aot :all}})

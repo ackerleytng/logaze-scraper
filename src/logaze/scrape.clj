@@ -1,7 +1,7 @@
 (ns logaze.scrape
   (:require [net.cgrand.enlive-html :as html]
             [clj-http.client :as client]
-            [clojure.string :as string]))
+            [slingshot.slingshot :refer [try+]]))
 
 (defn resource-page
   "Gets resource based on page number num"
@@ -9,14 +9,15 @@
   (let [q-params {"q" ":price-asc"
                   "pageSize" ""
                   "page" num}]
-    (println (str "resource-page " num))
+    (println (str "Getting resource-page " num))
     (html/html-resource
      (java.io.StringReader.
       (:body
        (client/get
         "https://www.lenovo.com/us/en/outletus/laptops/c/LAPTOPS"
         {:query-params q-params
-         :throw-exceptions false}))))))
+         :throw-exceptions false
+         :cookie-policy :none}))))))
 
 (defn num-product-pages
   "Using the first product page, grab the number of products found and
@@ -39,10 +40,15 @@
 (defn resource
   "Gets resource at url"
   [url]
-  (println (str "resource " url))
+  (println (str "Getting resource " url))
   (html/html-resource
    (java.io.StringReader.
-    (:body (client/get url {:throw-exceptions false})))))
+    (try+
+     (:body (client/get url {:throw-exceptions false
+                             :cookie-policy :none}))
+     (catch Object _
+       (println (str "Unexpected error accessing " url))
+       "")))))
 
 (defn laptop-links
   "Given a resource res of a page with the grid of laptops, like
