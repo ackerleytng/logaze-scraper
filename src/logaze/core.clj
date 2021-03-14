@@ -24,10 +24,12 @@
                ;; (take-while seq)
                (apply union)
                (map s/complete-laptop-link))
-          extracted
-          (pmap (comp e/extract s/resource) links)
-          data
-          (pmap (fn [e url] (assoc e :url url)) extracted links)
+          data (pmap
+                (fn [l]
+                  (assoc
+                   ((comp e/extract s/resource) l)
+                   :url l))
+                links)
           in-stock (filter in-stock? data)
           transformed (map t/transform-attributes in-stock)]
       (storage/post transformed)
