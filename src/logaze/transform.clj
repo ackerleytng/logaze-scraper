@@ -11,59 +11,59 @@
 ;; Individual functions
 
 (defn processor-cache [processor-str]
-  (when-let [matches (re-find #"(?i)\(.*?(\d+M)B?" processor-str)]
-    (second matches)))
+  (when-let [matches (re-find #"(?i)\(.*?(\d+ ?M)B?" processor-str)]
+    (string/replace (second matches) " " "")))
 
 (defn processor-range [processor-str]
-  (let [cleaned (string/replace processor-str #"[^A-Za-z0-9\- ]" "")]
-    (when-let [matches (re-find #"(i[3579]|Ryzen R?\d+|Celeron|Xeon|Atom|Pentium|A\d+|PRO A\d+|R\d)-?"
-                                cleaned)]
+  (let [cleaned (string/replace processor-str #"[^A-Za-z0-9\- ]" "")
+        regex #"(i[3579]|Ryzen R?\d+|Celeron|Athlon|Xeon|Atom|Pentium|A\d+|PRO A\d+|R\d)-?"]
+    (when-let [matches (re-find regex cleaned)]
       (second matches))))
 
-(defn hard-drive-size [hard-drive-str]
-  (when-let [matches (re-find #"(?i)([\d\.]+[GT])B?" hard-drive-str)]
-    (str (second matches) "B")))
+(defn processor-brand [processor-str]
+  (re-find #"(?i)Intel|AMD|MediaTek" processor-str))
 
-(defn hard-drive-type [s]
+(defn storage-size [storage-str]
+  (when-let [matches (re-find #"(?i)([\d\.]+ ?[GT])B?" storage-str)]
+    (string/replace (str (second matches) "B") " " "")))
+
+(defn storage-type [s]
   (cond
     (re-find #"(?i)and.*drives" s) "Multi"
     (re-find #"(?i)hard drive" s) "HDD"
     (re-find #"(?i)solid state" s) "SSD"
     (re-find #"(?i)embedded multi media card" s) "eMMC"
-    (re-find #"RPM" s) "HDD"))
+    (re-find #"RPM" s) "HDD"
+    :else (when-let [match (re-find #"(?i)(?:hdd|ssd|emmc)" s)]
+            (string/upper-case match))))
 
-(defn price->float [price]
-  (edn/read-string (string/replace price #"[\$,]" "")))
+(defn memory-size [memory-str]
+  (when-let [match (re-find #"\d+ ?GB" memory-str)]
+    (string/replace match " " "")))
 
-(defn fix-resolution
-  "Occasionally the resolution appears as 1920 x 1200 for example, instead of
-  1920x1200, this function fixes that"
-  [display-type-str]
-  (string/replace display-type-str #"(\d+)\s+x\s+(\d+)" "$1x$2"))
+(defn resolution
+  [display-str]
+  (when-let [match (re-find #"\d+\s*x\s*\d+" display-str)]
+    (string/replace match " " "")))
 
 (defn product-type [s]
   (when-let [matches (re-find #"(?i)(new|refurbished|scratch and dent)" s)]
     (second matches)))
 
-(defn clean-model [s]
-  (string/replace s #"(?i)\s*-\s*(new|refurbished|scratch and dent)" ""))
-
 (defn transform-attributes [attrs]
   (-> attrs
-      (extract :part-number :part-number #(string/replace % #"Part Number:  " ""))
-      (extract :orig-price :orig-price price->float)
-      (extract :price :price price->float)
-      (extract :model :product-type product-type)
-      (extract :model :model clean-model)
-      (extract :display-type :display-type fix-resolution)
-      (extract :display-type :screen-size #(edn/read-string (second (re-find #"(\d{2}\.?\d?)" %))))
-      (extract :display-type :screen-has-ips #(boolean (re-find #"IPS" %)))
-      (extract :display-type :screen-supports-touch #(boolean (re-find #"touch" %)))
-      (extract :display-type :resolution #(second (re-find #"(\d+x\d+)" %)))
-      (extract :memory :memory-size #(re-find #"\d+GB" %))
+      (extract :web-price :orig-price identity)
+      (extract :final-price :price identity)
+      (extract :product-mkt-name :model string/trim)
+      (extract :display :screen-size #(edn/read-string (second (re-find #"(\d{2}\.?\d?)" %))))
+      (extract :display :screen-has-ips #(boolean (re-find #"IPS" %)))
+      (extract :display :resolution resolution)
+      (extract :memory :memory-size memory-size)
       (extract :memory :memory-soldered #(boolean (re-find #"(?i)soldered" %)))
-      (extract :hard-drive :hard-drive-size hard-drive-size)
-      (extract :hard-drive :hard-drive-type hard-drive-type)
-      (extract :processor :processor-brand #(second (re-find #"(?i)(Intel|AMD)" %)))
+      (extract :storage :storage-size storage-size)
+      (extract :storage :storage-type storage-type)
+      (extract :processor :processor-brand processor-brand)
       (extract :processor :processor-cache processor-cache)
-      (extract :processor :processor-range processor-range)))
+      (extract :processor :processor-range processor-range)
+      (extract :url :url #(str "https://www.lenovo.com/us/outletus/en" %))
+      (extract :inventory-status :available {2 false 1 true})))
