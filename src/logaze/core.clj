@@ -6,11 +6,15 @@
             [clojure.core.async :refer [go]]
             [ring.middleware.cors :refer [wrap-cors]]))
 
+(defn distinct-by-product-code [v]
+  (map first (vals (group-by :product-code v))))
+
 (defn do-scraping []
   (->> (range)
        (pmap o/extract)
        (take-while seq)
        (apply union)
+       (distinct-by-product-code)
        (pmap t/transform-attributes)
        (filter :available)
        (pmap s/clean)
