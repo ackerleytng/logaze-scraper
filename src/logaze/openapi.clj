@@ -76,14 +76,14 @@
     (println (string/join " " ["Getting detail" url product-number]))
     (:body (client/get url params))))
 
-(defn extract-product-info
+(defn extract-detail
   [detail]
   (let [parsed (parse-string detail keywordize)]
     (get-in parsed [:data 0 :product-list 0])))
 
-(defn extract-detail
+(defn extract-flatten-detail
   [detail]
-  (let [product-info (extract-product-info detail)]
+  (let [product-info (extract-detail detail)]
     (merge (classification-edn (:classification product-info))
            (select-keys product-info
                         [:product-number
@@ -93,8 +93,8 @@
 
 (defn extract-product-full
   [product]
-  (let [overview (select-keys product [:final-price :web-price :product-code])
-        details (extract-detail ((randomly-delay detail) (:product-code overview)))]
+  (let [overview (select-keys product [:final-price :web-price :product-code :product-condition])
+        details (extract-flatten-detail ((randomly-delay detail) (:product-code overview)))]
     (merge overview details)))
 
 (defn extract [n]
