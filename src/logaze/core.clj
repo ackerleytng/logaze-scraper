@@ -11,11 +11,11 @@
 
 (defn do-scraping []
   (->> (range)
-       (pmap o/extract)
+       (pmap o/extract-page-products)
        (take-while seq)
        (apply union)
        (distinct-by-product-code)
-       (pmap t/transform-attributes)
+       (pmap (comp t/transform-attributes o/enrich-product))
        (filter :available)
        (pmap s/clean)
        (s/post))
@@ -37,15 +37,11 @@
 (comment
   (o/extract-detail (o/detail "81VU00D5US"))
 
-  (def all-page-1 (o/extract 1))
-
   (def page-1 (o/extract-page (o/page 1)))
 
   (def product-0-page-1 (first page-1))
 
-  (def extracted (o/extract-product-full product-0-page-1))
-
-  (def transformed (t/transform-attributes extracted))
+  (def transformed (t/transform-attributes (o/enrich-product product-0-page-1)))
 
   (do-scraping)
   )

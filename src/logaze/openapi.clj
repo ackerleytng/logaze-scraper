@@ -91,11 +91,10 @@
                          :inventory-status
                          :product-mkt-name]))))
 
-(defn extract-product-full
-  [product]
-  (let [overview (select-keys product [:final-price :web-price :product-code :product-condition])
-        details (extract-flatten-detail ((randomly-delay detail) (:product-code overview)))]
-    (merge overview details)))
+(defn extract-page-products [n]
+  (map #(select-keys % [:final-price :web-price :product-code :product-condition])
+       (extract-page (page n))))
 
-(defn extract [n]
-  (pmap extract-product-full (extract-page ((randomly-delay page) n))))
+(defn enrich-product [product]
+  (let [details (extract-flatten-detail (detail (:product-code product)))]
+    (merge product details)))
