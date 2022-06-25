@@ -67,4 +67,5 @@
       (extract :processor :processor-range processor-range)
       (extract :product-condition :product-condition string/trim)
       (extract :url :url #(str "https://www.lenovo.com/us/outletus/en" %))
-      (extract :inventory-status :available {2 false 1 true})))
+      (extract :inventory-status :available {2 false 1 true})
+      (extract :save-percent :percentage-savings #(Float/parseFloat %))))

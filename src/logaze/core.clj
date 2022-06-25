@@ -37,11 +37,17 @@
 (comment
   (o/extract-detail (o/detail "81VU00D5US"))
 
-  (def page-1 (o/extract-page (o/page 1)))
+  (def page-1 (o/extract-page-products 1))
 
   (def product-0-page-1 (first page-1))
 
   (def transformed (s/clean (t/transform-attributes (o/enrich-product product-0-page-1))))
+
+  (-> (o/extract-page-products 1)
+      (first)
+      (o/enrich-product)
+      (t/transform-attributes)
+      (s/clean))
 
   (do-scraping)
   )

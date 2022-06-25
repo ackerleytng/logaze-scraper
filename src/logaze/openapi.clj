@@ -92,7 +92,7 @@
                          :product-mkt-name]))))
 
 (defn extract-page-products [n]
-  (map #(select-keys % [:final-price :web-price :product-code :product-condition])
+  (map #(select-keys % [:final-price :web-price :product-code :product-condition :save-percent])
        (extract-page (page n))))
 
 (defn enrich-product [product]

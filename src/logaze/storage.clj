@@ -19,6 +19,7 @@
                 :model
                 :operating-system
                 :orig-price
+                :percentage-savings
                 :price
                 :processor
                 :processor-brand
