@@ -52,8 +52,8 @@
 
 (defn transform-attributes [attrs]
   (-> attrs
-      (extract :web-price :orig-price identity)
-      (extract :final-price :price identity)
+      (extract :web-price :orig-price #(Float/parseFloat %))
+      (extract :final-price :price #(Float/parseFloat %))
       (extract :product-mkt-name :model string/trim)
       (extract :display :screen-size #(edn/read-string (second (re-find #"(\d{2}\.?\d?)" %))))
       (extract :display :screen-has-ips #(boolean (re-find #"IPS" %)))

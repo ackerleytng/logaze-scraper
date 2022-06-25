@@ -41,7 +41,7 @@
 
   (def product-0-page-1 (first page-1))
 
-  (def transformed (t/transform-attributes (o/enrich-product product-0-page-1)))
+  (def transformed (s/clean (t/transform-attributes (o/enrich-product product-0-page-1))))
 
   (do-scraping)
   )
