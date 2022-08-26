@@ -45,3 +45,12 @@ lein ring server-headless
 ```
 lein test
 ```
+
+## Deploying
+
+```
+lein ring uberjar
+scp logaze.jar alwaysdata:
+```
+
+Login at alwaysdata and restart the site.
