@@ -50,7 +50,8 @@ lein test
 
 ```
 lein ring uberjar
-scp logaze.jar alwaysdata:
+docker build -t quay.io/ackerleytng/logaze-scraper:0.1.0
+docker push quay.io/ackerleytng/logaze-scraper:0.1.0
 ```
 
-Login at alwaysdata and restart the site.
+Login at koyeb.com and update (may need to bump the version numbers above)
