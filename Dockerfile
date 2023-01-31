@@ -8,4 +8,4 @@ RUN lein ring uberjar
 FROM gcr.io/distroless/java17-debian11
 COPY --from=builder /tmp/target/logaze.jar /app/logaze.jar
 WORKDIR /app
-CMD ["java" "-Xmx256m" "logaze.jar"]
+CMD ["logaze.jar"]
