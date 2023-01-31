@@ -48,10 +48,4 @@ lein test
 
 ## Deploying
 
-```
-lein ring uberjar
-docker build -t quay.io/ackerleytng/logaze-scraper:0.1.0
-docker push quay.io/ackerleytng/logaze-scraper:0.1.0
-```
-
-Login at koyeb.com and update (may need to bump the version numbers above)
+Push to github and render.com auto deployment should get triggered.
