@@ -12,7 +12,7 @@
                 :camera
                 :display
                 :fingerprint-reader
-                :graphics
+                :graphic-card
                 :keyboard
                 :memory
                 :memory-size
