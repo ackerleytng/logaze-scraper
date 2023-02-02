@@ -18,8 +18,7 @@
        (pmap (comp t/transform-attributes o/enrich-product))
        (filter :available)
        (pmap s/clean)
-       (s/post))
-  (println "Posted to storage!"))
+       (s/post)))
 
 (defn scrape-handler [_request]
   (go (do-scraping))

@@ -2,7 +2,8 @@
   (:require [clj-http.client :as client]
             [cheshire.core :refer [generate-string]]))
 
-(def storage-api "https://jsonblob.com/api/jsonBlob/381d4455-63af-11ea-ad21-453934360a11")
+(def storage-api-0 "https://jsonblob.com/api/jsonBlob/381d4455-63af-11ea-ad21-453934360a11")
+(def storage-api-1 "https://jsonblob.com/api/jsonBlob/1070684176440901632")
 
 (defn clean [product]
   (select-keys product
@@ -39,7 +40,14 @@
                 :weight
                 :wlan]))
 
-(defn post [data]
+(defn save [data location]
   (client/put
-   storage-api
-   {:body (generate-string data) :content-type :json}))
+   location
+   {:body (generate-string data) :content-type :json})
+  (println (str "Posted " (count data) " entries to " location)))
+
+(defn post [data]
+  (let [half (/ (count data) 2)]
+    ;; Put data to two places to avoid timeouts on each put
+    (save (take half data) storage-api-0)
+    (save (drop half data) storage-api-1)))
