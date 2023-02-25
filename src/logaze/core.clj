@@ -43,8 +43,9 @@
     (->> (persistent! (a/<!! (a/reduce conj! (transient []) products-enriched>))))))
 
 (defn scrape-handler [request]
+  (println {:request-uri (:uri request)})
   (when (= "/" (:uri request))
-    (a/thread (do-scraping)))
+    (a/thread (s/post (do-scraping))))
   {:status 200
    :headers {"Content-Type" "text/plain"}
    :body "Done!"})
