@@ -53,7 +53,7 @@
                        :cookie-policy :standard
                        :query-params {"params" query}}
                       page-client)]
-     (println (string/join " " ["Getting page" url (str n)]))
+     (println {:getting :page :n n})
      (:body (client/get url params)))))
 
 (defn extract-page
@@ -73,7 +73,7 @@
                       :query-params {"compareReq" query}
                       :headers {"referer" referer}}
                      compare-client)]
-    (println (string/join " " ["Getting detail" url product-number]))
+    (println {:getting :detail :product-code product-number})
     (:body (client/get url params))))
 
 (defn extract-detail

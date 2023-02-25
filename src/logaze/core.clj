@@ -2,36 +2,59 @@
   (:require [logaze.openapi :as o]
             [logaze.transform :as t]
             [logaze.storage :as s]
-            [clojure.set :refer [union]]
-            [clojure.core.async :refer [go]]
+            [clojure.set :refer [difference]]
+            [clojure.core.async :as a]
             [ring.middleware.cors :refer [wrap-cors]]))
 
-(defn distinct-by-product-code [v]
-  (map first (vals (group-by :product-code v))))
-
 (defn do-scraping []
-  (->> (range)
-       (pmap o/extract-page-products)
-       (take-while seq)
-       (apply union)
-       (distinct-by-product-code)
-       (pmap (comp t/transform-attributes o/enrich-product))
-       (filter :available)
-       (pmap s/clean)
-       (s/post)))
+  (let [parallelism 4
+        ;; Track the product codes that need to be enriched
+        remaining (atom #{})
+        products-raw> (a/chan (* 2 parallelism))
+        ;; Close channel only when product codes have been retrieved
+        track (fn [item]
+                (let [next-remaining (swap! remaining disj (:product-code item))]
+                  (when (empty? next-remaining)
+                    (a/close! products-raw>)))
+                item)
+        ;; xf of channel applies after xf of pipeline function
+        products-enriched> (a/chan (* 2 parallelism) (comp (map track)
+                                                           (map t/transform-attributes)
+                                                           (filter :available)
+                                                           (map s/clean)))]
 
-(defn scrape-handler [_request]
-  (go (do-scraping))
+    (a/go-loop [n 0
+                seen #{}]
+      (let [raw-data (o/extract-page-products n)
+            new-product-codes (difference (set (map :product-code raw-data)) seen)
+            data (filter (fn [d] (new-product-codes (:product-code d))) raw-data)]
+
+        (a/onto-chan!! products-raw> data false)
+        (swap! remaining into new-product-codes)
+
+        (when (seq raw-data)
+          (recur (inc n) (into seen new-product-codes)))))
+
+    (a/pipeline-blocking
+     parallelism products-enriched>
+     (map o/enrich-product)
+     products-raw>)
+
+    (->> (persistent! (a/<!! (a/reduce conj! (transient []) products-enriched>))))))
+
+(defn scrape-handler [request]
+  (when (= "/" (:uri request))
+    (a/thread (do-scraping)))
   {:status 200
    :headers {"Content-Type" "text/plain"}
    :body "Done!"})
 
 (def handler
-  (wrap-cors
-   scrape-handler
-   :access-control-allow-origin [#"http://localhost:?\d*/?"
-                                 #"https://ackerleytng.github.io/?"]
-   :access-control-allow-methods [:get]))
+(wrap-cors
+ scrape-handler
+ :access-control-allow-origin [#"http://localhost:?\d*/?"
+                               #"https://ackerleytng.github.io/?"]
+ :access-control-allow-methods [:get]))
 
 (comment
   (o/extract-detail (o/detail "81VU00D5US"))
@@ -48,5 +71,8 @@
       (t/transform-attributes)
       (s/clean))
 
-  (do-scraping)
+  (def l (do-scraping))
+
+  (count l)
+
   )
