@@ -2,7 +2,7 @@
   (:require [clj-http.conn-mgr :refer [make-reusable-conn-manager]]
             [clj-http.core :refer [build-http-client]]
             [clj-http.client :as client]
-            [cheshire.core :refer [parse-string]]
+            [cheshire.core :refer [parse-string generate-string]]
             [clojure.string :as string]))
 
 (defn build-client []
@@ -46,12 +46,14 @@
          ;;   https://www.lenovo.com/us/outletus/en/laptops/, view source,
          ;;   and then Ctrl-F for facetId to find this value
          page-filter-id "5dfc6cc3-0105-4ebd-8591-b8bbe8ddaa35"
-         query (str "{\"pageFilterId\":\"" page-filter-id
-                    "\",\"page\":" n
-                    ",\"pageSize\":" page-size "}")
+         ;; Yes, the server wants a double-encoded query, so we have to pass clj-http a string
+         query (generate-string {:pageFilterId page-filter-id
+                                 :page (str n)
+                                 :pageSize (str page-size)})
          params (into {:accept :json
                        :cookie-policy :standard
-                       :query-params {"params" query}}
+                       :query-params {:params query}
+                       :headers {:referer "https://www.lenovo.com/"}}
                       page-client)]
      (println {:getting :page :n n})
      (:body (client/get url params)))))
@@ -66,12 +68,12 @@
   "Get details for a laptop with product-number at lenovo's outlet website"
   [product-number]
   (let [url "https://openapi.lenovo.com/us/outletus/en/product/compare/getCompareData"
-        query (str "[{\"categoryCode\":\"laptops\",\"productNumber\":" [product-number] "}]")
-        referer "https://www.lenovo.com/us/outletus/en/compare_product.html'"
+        query (generate-string [{:categoryCode "laptops"
+                                 :productNumber [product-number]}])
         params (into {:accept :json
                       :cookie-policy :standard
-                      :query-params {"compareReq" query}
-                      :headers {"referer" referer}}
+                      :query-params {:compareReq query}
+                      :headers {:referer "https://www.lenovo.com/"}}
                      compare-client)]
     (println {:getting :detail :product-code product-number})
     (:body (client/get url params))))

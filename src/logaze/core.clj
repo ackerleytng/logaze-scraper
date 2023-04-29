@@ -58,8 +58,6 @@
  :access-control-allow-methods [:get]))
 
 (comment
-  (o/extract-detail (o/detail "81VU00D5US"))
-
   (def page-1 (o/extract-page-products 1))
 
   (def product-0-page-1 (first page-1))
