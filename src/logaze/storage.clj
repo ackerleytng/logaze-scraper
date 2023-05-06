@@ -2,8 +2,8 @@
   (:require [clj-http.client :as client]
             [cheshire.core :refer [generate-string]]))
 
-(def storage-api-0 "https://jsonblob.com/api/jsonBlob/381d4455-63af-11ea-ad21-453934360a11")
-(def storage-api-1 "https://jsonblob.com/api/jsonBlob/1070684176440901632")
+(def storage-api-0 "https://jsonblob.com/api/jsonBlob/1104252648328282112")
+(def storage-api-1 "https://jsonblob.com/api/jsonBlob/1104252815584542720")
 
 (defn clean [product]
   (select-keys product
