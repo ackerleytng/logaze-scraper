@@ -9,7 +9,11 @@
 (defn do-scraping []
   (let [parallelism 4
         ;; Track the product codes that need to be enriched
-        remaining (atom #{})
+
+        ;; :more-products-coming is a sentinel to indicate that there may be more products to list
+        ;; Without :more-products-coming, if enriching products goes more quickly than extracting
+        ;; products from a page, scraping may terminate prematurely.
+        remaining (atom #{:more-products-coming})
         products-raw> (a/chan (* 2 parallelism))
         ;; Close channel only when product codes have been retrieved
         track (fn [item]
@@ -32,8 +36,9 @@
         (a/onto-chan!! products-raw> data false)
         (swap! remaining into new-product-codes)
 
-        (when (seq raw-data)
-          (recur (inc n) (into seen new-product-codes)))))
+        (if (seq raw-data)
+          (recur (inc n) (into seen new-product-codes))
+          (swap! remaining disj :more-products-coming))))
 
     (a/pipeline-blocking
      parallelism products-enriched>
