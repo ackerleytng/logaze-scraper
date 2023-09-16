@@ -52,8 +52,8 @@
 
 (defn transform-attributes [attrs]
   (-> attrs
-      (extract :web-price :orig-price #(Float/parseFloat %))
-      (extract :final-price :price #(Float/parseFloat %))
+      (extract :web-price :orig-price #(Double/parseDouble %))
+      (extract :final-price :price #(Double/parseDouble %))
       (extract :product-mkt-name :model string/trim)
       (extract :display :screen-size #(edn/read-string (second (re-find #"(\d{2}\.?\d?)" %))))
       (extract :display :screen-has-ips #(boolean (re-find #"IPS" %)))
@@ -68,4 +68,4 @@
       (extract :product-condition :product-condition string/trim)
       (extract :url :url #(str "https://www.lenovo.com/us/outletus/en" %))
       (extract :inventory-status :available {2 false 1 true})
-      (extract :save-percent :percentage-savings #(Float/parseFloat %))))
+      (extract :save-percent :percentage-savings #(Double/parseDouble %))))
