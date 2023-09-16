@@ -130,7 +130,7 @@
      :fingerprint-reader "Fingerprint Reader"
      :weight "Starting at 3.04 lbs (1.38 kg)"
      :operating-system "Windows 10 Pro 64"
-     :orig-price "729.99"
+     :orig-price 729.99
      :graphics "Integrated Intel® UHD Graphics"
      :product-code "20R3X001US"
      :url "https://www.lenovo.com/us/outletus/en/p/laptops/thinkpad/thinkpadl/L13-Clam-2019/20R3X001US"
@@ -147,7 +147,8 @@
      :product-condition "Refurbished"
      :storage-type "SSD"
      :processor "10th Generation Intel® Core™ i5-10210U Processor (1.60 GHz, up to 4.20 GHz with Turbo Boost, 4 Cores, 8 Threads, 6 MB Cache)"
-     :price "372.29"
+     :price 372.29
+     :percentage-savings nil
      :model "ThinkPad L13 Intel (13\") - Black"}
     (t/transform-attributes
      {:keyboard "Backlit - US English"
