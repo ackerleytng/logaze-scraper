@@ -10,6 +10,12 @@
 
 ;; Individual functions
 
+(defn model [model-str]
+  (-> model-str
+    (string/replace #"(?i)^\s*(notebook|lenovo)" "")
+    (string/replace #"(?i)^\s*(workstation)" "ThinkPad")
+    (string/trim)))
+
 (defn processor-cache [processor-str]
   (when-let [matches (re-find #"(?i)\(.*?(\d+ ?M)B?" processor-str)]
     (string/replace (second matches) " " "")))
@@ -54,7 +60,7 @@
   (-> attrs
       (extract :web-price :orig-price #(Double/parseDouble %))
       (extract :final-price :price #(Double/parseDouble %))
-      (extract :product-mkt-name :model string/trim)
+      (extract :product-mkt-name :model model)
       (extract :display :screen-size #(edn/read-string (second (re-find #"(\d{2}\.?\d?)" %))))
       (extract :display :screen-has-ips #(boolean (re-find #"IPS" %)))
       (extract :display :resolution resolution)
