@@ -2,6 +2,8 @@ pom.xml
 pom.xml.asc
 *.jar
 *.class
+.calva/
+.lsp/
 /lib/
 /classes/
 /target/
