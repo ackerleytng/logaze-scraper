@@ -1,5 +1,6 @@
 (ns logaze.openapi
-  (:require [clj-http.conn-mgr :refer [make-reusable-conn-manager]]
+  (:require [logaze.helpers :as h]
+            [clj-http.conn-mgr :refer [make-reusable-conn-manager]]
             [clj-http.core :refer [build-http-client]]
             [clj-http.client :as client]
             [cheshire.core :refer [parse-string generate-string]]
@@ -55,7 +56,7 @@
                        :query-params {:params query}
                        :headers {:referer "https://www.lenovo.com/"}}
                       page-client)]
-     (println {:getting :page :n n})
+     (h/safe-println {:info "getting page" :n n})
      (:body (client/get url params)))))
 
 (defn extract-page
@@ -75,7 +76,7 @@
                       :query-params {:compareReq query}
                       :headers {:referer "https://www.lenovo.com/"}}
                      compare-client)]
-    (println {:getting :detail :product-code product-number})
+    (h/safe-println {:info "getting detail" :product-code product-number})
     (:body (client/get url params))))
 
 (defn extract-detail
