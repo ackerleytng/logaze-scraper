@@ -6,20 +6,9 @@
             [cheshire.core :refer [parse-string generate-string]]
             [clojure.string :as string]))
 
-(defn build-client []
-  (let [cm (make-reusable-conn-manager {})
-        client (build-http-client {} false cm)]
-    {:connection-manager cm
-     :http-client client}))
-
 ;; Reusing clients is kinder to the server (also seems to prevent throttling)
-(def compare-client (build-client))
-(def page-client (build-client))
-
-(defn randomly-delay [f]
-  (fn [& args]
-    (Thread/sleep (max 500 (rand-int 5000)))
-    (apply f args)))
+(def conn-manager (make-reusable-conn-manager {}))
+(def http-client (build-http-client {} false conn-manager))
 
 (defn keywordize [s]
   (->> s
@@ -51,11 +40,12 @@
          query (generate-string {:pageFilterId page-filter-id
                                  :page (str n)
                                  :pageSize (str page-size)})
-         params (into {:accept :json
-                       :cookie-policy :standard
-                       :query-params {:params query}
-                       :headers {:referer "https://www.lenovo.com/"}}
-                      page-client)]
+         params {:accept :json
+                 :cookie-policy :standard
+                 :query-params {:params query}
+                 :headers {:referer "https://www.lenovo.com/"}
+                 :connection-manager conn-manager
+                 :http-client http-client}]
      (h/safe-println {:info "getting page" :n n})
      (:body (client/get url params)))))
 
@@ -71,11 +61,12 @@
   (let [url "https://openapi.lenovo.com/us/outletus/en/product/compare/getCompareData"
         query (generate-string [{:categoryCode "laptops"
                                  :productNumber [product-number]}])
-        params (into {:accept :json
-                      :cookie-policy :standard
-                      :query-params {:compareReq query}
-                      :headers {:referer "https://www.lenovo.com/"}}
-                     compare-client)]
+        params {:accept :json
+                :cookie-policy :standard
+                :query-params {:compareReq query}
+                :headers {:referer "https://www.lenovo.com/"}
+                :connection-manager conn-manager
+                :http-client http-client}]
     (h/safe-println {:info "getting detail" :product-code product-number})
     (:body (client/get url params))))
 
