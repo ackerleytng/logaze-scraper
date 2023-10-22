@@ -2,6 +2,16 @@
   (:require [logaze.transform :as t]
             [clojure.test :refer [deftest is]]))
 
+(deftest model-test
+  (is (= "Ideapad 3"
+         (t/model "Notebook Ideapad 3")))
+  (is (= "ThinkPad P16 Gen 1"
+         (t/model "Workstation P16 Gen 1")))
+  (is (= "ThinkPad T15p Gen 3"
+         (t/model "Notebook Workstation T15p Gen 3")))
+  (is (= "ThinkPad"
+         (t/model "Lenovo ThinkPad"))))
+
 (deftest memory-size-test
   (is (= "8GB"
          (t/memory-size "8 GB DDR4 2667MHz (Soldered)")))
@@ -95,13 +105,35 @@
 (deftest resolution-test
   (is (= "1920x1200" (t/resolution "1920 x 1200")))
   (is (= "1920x1200"
-         (t/resolution
-          "10.1 WUXGA (1920 x 1200) IPS Multi-touch w/ Front 1.2mp and Rear 5.0mp Camera")))
+         (t/resolution "10.1 WUXGA (1920 x 1200) IPS Multi-touch w/ Front 1.2mp and Rear 5.0mp Camera")))
   (is (= "1366x768"
-         (t/resolution
-          "15.6\" HD (1366x768) anti-glare, LED backlight w/720p Camera")))
+         (t/resolution "15.6\" HD (1366x768) anti-glare, LED backlight w/720p Camera")))
   (is (= nil
          (t/resolution "no match!"))))
+
+(deftest resolution-from-display-standards-test
+  (is (= "1920x1200"
+         (t/resolution-from-display-standards "13.3\" WUXGA Anti-Glare 300 nits")))
+  (is (= "3840x2400"
+         (t/resolution-from-display-standards "14\" WQUXGA OLED Anti-Reflective/Anti-Smudge 500 nits Multi-Touch")))
+  (is (= "2240x1400"
+         (t/resolution-from-display-standards "14\" 2.2K Anti-Glare 300 nits")))
+  (is (= "1920x1080"
+         (t/resolution-from-display-standards "15.6\" FHD TN Anti-Glare 250 nits"))))
+
+(deftest extract-resolution-test
+  ;; :display should take priority
+  (is (= "1920x1080"
+         (t/extract-resolution {:display "1920x1080" :screen-resolution "2240x1400"})))
+  ;; :screen-resolution should be used if :display doesn't contain a resolution-like string
+  (is (= "2240x1400"
+         (t/extract-resolution {:display "FHD" :screen-resolution "2240x1400"})))
+  ;; Finally, fall back to extracting based on display standards
+  (is (= "3840x2400"
+         (t/extract-resolution {:display "WQUXGA" :screen-resolution "something else"})))
+  ;; nil if all else fails
+  (is (= nil
+         (t/extract-resolution {:display "no match" :screen-resolution "something else"}))))
 
 (deftest product-type-test
   (is (= "Scratch and Dent" (t/product-type "ThinkPad X1 Carbon (6th Gen) - Scratch and Dent")))

@@ -47,10 +47,40 @@
   (when-let [match (re-find #"\d+ ?GB" memory-str)]
     (string/replace match " " "")))
 
-(defn resolution
-  [display-str]
-  (when-let [match (re-find #"\d+\s*x\s*\d+" display-str)]
+(defn resolution [str]
+  "Extracts resolution if defined similar to '1920x1080' or '1920 x 1080'"
+  (when-let [match (re-find #"\d+\s*x\s*\d+" str)]
     (string/replace match " " "")))
+
+(defn resolution-from-display-standards [str]
+  "Extracts resolution from string based on display standards"
+  (condp re-find str
+    #"WUXGA" "1920x1200"
+    #"WQXGA" "2560x1600"
+    #"WQUXGA" "3840x2400"
+    #"2.2K" "2240x1400"
+    #"2.5K" "2560x1600"
+    #"2.8K" "2880x1800"
+    #"2K" "2160x1350"
+    #"3K" "3072x1920"
+    #"FHD\+" "1920x1200"
+    #"UHD\+" "3840x2400"
+    #"FHD" "1920x1080"
+    #"UHD" "3840x2160"
+    #"HD" "1366x768"
+    nil))
+
+(defn extract-resolution [attrs]
+  "Extract resolution from attrs. Order matters: try extracting
+  from :display, then :screen-resolution, otherwise fall back to
+  display standards"
+  (or
+   (when-let [s (:display attrs)]
+     (resolution s))
+   (when-let [s (:screen-resolution attrs)]
+     (resolution s))
+   (when-let [s (:display attrs)]
+     (resolution-from-display-standards s))))
 
 (defn product-type [s]
   (when-let [matches (re-find #"(?i)(new|refurbished|scratch and dent)" s)]
@@ -58,12 +88,12 @@
 
 (defn transform-attributes [attrs]
   (-> attrs
+      (assoc :resolution (extract-resolution attrs))
       (extract :web-price :orig-price #(Double/parseDouble %))
       (extract :final-price :price #(Double/parseDouble %))
       (extract :product-mkt-name :model model)
       (extract :display :screen-size #(edn/read-string (second (re-find #"(\d{2}\.?\d?)" %))))
       (extract :display :screen-has-ips #(boolean (re-find #"IPS" %)))
-      (extract :display :resolution resolution)
       (extract :memory :memory-size memory-size)
       (extract :memory :memory-soldered #(boolean (re-find #"(?i)soldered" %)))
       (extract :storage :storage-size storage-size)
