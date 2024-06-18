@@ -70,6 +70,31 @@
     (h/safe-println {:info "getting detail" :product-code product-number})
     (:body (client/get url params))))
 
+(defn batchPrice
+  "Get (potentially discounted) price for a laptop with product-number at lenovo's outlet website"
+  [product-number]
+  ;; Found by finding a product which (temporarily) had a different price than
+  ;; logaze, and searching through all network requests
+  (let [url "https://openapi.lenovo.com/us/outletus/en/detail/price/batch/get"
+        params {:accept :json
+                :cookie-policy :standard
+                :query-params {:preSelect "1"
+                               :mcode [product-number]
+                               :configId ""
+                               :enteredCode ""}
+                :headers {:referer "https://www.lenovo.com/us/en/search"}
+                :connection-manager conn-manager
+                :http-client http-client}]
+    (h/safe-println {:info "getting batch price " :product-code product-number})
+    (:body (client/get url params))))
+
+(defn extract-batchPrice
+  [detail product-number]
+  (let [parsed (parse-string detail)]
+    ;; The subkey in the JSON is the actual string of product-number (TODO could
+    ;; be brittle, just take first?). Don't know how to do with keywordize
+    (get-in parsed ["data" product-number 4])))
+
 (defn extract-detail
   [detail]
   (let [parsed (parse-string detail keywordize)]
@@ -90,5 +115,8 @@
        (extract-page (page n))))
 
 (defn enrich-product [product]
-  (let [details (extract-flatten-detail (detail (:product-code product)))]
-    (merge product details)))
+  (let [details (extract-flatten-detail (detail (:product-code product)))
+        newPrice {:price (extract-batchPrice (batchPrice (:product-code product))
+                                             (:product-code product)
+                                             )}]
+    (merge product details newPrice)))
