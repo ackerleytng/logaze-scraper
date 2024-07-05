@@ -70,31 +70,6 @@
     (h/safe-println {:info "getting detail" :product-code product-number})
     (:body (client/get url params))))
 
-(defn batchPrice
-  "Get (potentially discounted) price for a laptop with product-number at lenovo's outlet website"
-  [product-number]
-  ;; Found by finding a product which (temporarily) had a different price than
-  ;; logaze, and searching through all network requests
-  (let [url "https://openapi.lenovo.com/us/outletus/en/detail/price/batch/get"
-        params {:accept :json
-                :cookie-policy :standard
-                :query-params {:preSelect "1"
-                               :mcode [product-number]
-                               :configId ""
-                               :enteredCode ""}
-                :headers {:referer "https://www.lenovo.com/us/en/search"}
-                :connection-manager conn-manager
-                :http-client http-client}]
-    (h/safe-println {:info "getting batch price " :product-code product-number})
-    (:body (client/get url params))))
-
-(defn extract-batchPrice
-  [detail product-number]
-  (let [parsed (parse-string detail)]
-    ;; The subkey in the JSON is the actual string of product-number (TODO could
-    ;; be brittle, just take first?). Don't know how to do with keywordize
-    (get-in parsed ["data" product-number 4])))
-
 (defn extract-detail
   [detail]
   (let [parsed (parse-string detail keywordize)]
@@ -114,9 +89,31 @@
   (map #(select-keys % [:final-price :web-price :product-code :product-condition :save-percent])
        (extract-page (page n))))
 
+(defn batch-price
+  "Get (potentially discounted) price for a laptop with product-number at Lenovo's outlet website.
+
+  :final-price as extracted from the page is sometimes overridden by a lower price from this API call."
+  [product-number]
+  (let [url "https://openapi.lenovo.com/us/outletus/en/detail/price/batch/get"
+        params {:accept :json
+                :cookie-policy :standard
+                :query-params {:preSelect "1"
+                               :mcode [product-number]
+                               :configId ""
+                               :enteredCode ""}
+                :headers {:referer "https://www.lenovo.com/us/en/search"}
+                :connection-manager conn-manager
+                :http-client http-client}]
+    (h/safe-println {:info "getting batch price" :product-code product-number})
+    (let [raw (:body (client/get url params))
+          price-index 4]
+      (get-in (parse-string raw) ["data" product-number price-index]))))
+
 (defn enrich-product [product]
-  (let [details (extract-flatten-detail (detail (:product-code product)))
-        newPrice {:price (extract-batchPrice (batchPrice (:product-code product))
-                                             (:product-code product)
-                                             )}]
-    (merge product details newPrice)))
+  (let [product-code (:product-code product)
+        details (extract-flatten-detail (detail product-code))
+        enriched (merge product details)
+        batch-price-api-result (batch-price product-code)]
+    (if (some? batch-price-api-result)
+      (assoc enriched :final-price batch-price-api-result)
+      enriched)))
