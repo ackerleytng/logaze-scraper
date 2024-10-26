@@ -26,10 +26,11 @@
             {(keywordize key) (string/trim (string/replace value #"<.*?>" ""))})
           classification)))
 
-(defn page
-  "Get page number n of the laptops at lenovo's outlet website, with a page-size of page-size"
-  ([n] (page n 40))
-  ([n page-size]
+(defn raw-page
+  "Get page number n of the laptops at lenovo's outlet website, with a page-size of page-size, as a string"
+  ([n] (raw-page n true 40))
+  ([n sort-ascending] (raw-page n sort-ascending 40))
+  ([n sort-ascending page-size]
    (let [url "https://openapi.lenovo.com/us/outletus/en/ofp/search/dlp/product/query/get/_tsc"
          ;; This represents the type of products (laptops, desktops, etc)
          ;; Select one of Laptops/Desktops/Workstations/Tablets at
@@ -39,19 +40,25 @@
          ;; Yes, the server wants a double-encoded query, so we have to pass clj-http a string
          query (generate-string {:pageFilterId page-filter-id
                                  :page (str n)
-                                 :pageSize (str page-size)})
+                                 :pageSize (str page-size)
+                                 :sorts [(if sort-ascending "priceUp" "priceDown")]})
          params {:accept :json
                  :cookie-policy :standard
                  :query-params {:params query}
                  :headers {:referer "https://www.lenovo.com/"}
                  :connection-manager conn-manager
                  :http-client http-client}]
-     (h/safe-println {:info "getting page" :n n})
+     (h/safe-println {:info "getting page" :n n :ascending sort-ascending :page-size page-size})
      (:body (client/get url params)))))
 
+(defn num-pages [page-size]
+  (-> (raw-page 0 true page-size)
+      (parse-string keywordize)
+      (get-in [:data :page-count])))
+
 (defn extract-page
-  [page]
-  (-> page
+  [raw-page]
+  (-> raw-page
       (parse-string keywordize)
       (get-in [:data :data])))
 
@@ -85,9 +92,8 @@
                          :inventory-status
                          :product-mkt-name]))))
 
-(defn extract-page-products [n]
-  (map #(select-keys % [:final-price :web-price :product-code :product-condition :save-percent])
-       (extract-page (page n))))
+(defn extract-page-products [page]
+  (map #(select-keys % [:final-price :web-price :product-code :product-condition :save-percent]) page))
 
 (defn batch-price
   "Get (potentially discounted) price for a laptop with product-number at Lenovo's outlet website.

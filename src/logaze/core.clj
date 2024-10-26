@@ -2,12 +2,14 @@
   (:require [logaze.openapi :as o]
             [logaze.transform :as t]
             [logaze.storage :as s]
+            [logaze.helpers :as h]
             [clojure.set :refer [difference]]
             [clojure.core.async :as a]
             [ring.middleware.cors :refer [wrap-cors]]))
 
 (defn do-scraping []
-  (let [parallelism 4
+  (let [page-size 40
+        parallelism 4
         ;; Track the product codes that need to be enriched
 
         ;; :more-products-coming is a sentinel to indicate that there may be more products to list
@@ -25,20 +27,40 @@
         products-enriched> (a/chan (* 2 parallelism) (comp (map track)
                                                            (map t/transform-attributes)
                                                            (filter :available)
-                                                           (map s/clean)))]
+                                                           (map s/clean)))
+        num-pages (o/num-pages page-size)]
 
     (a/go-loop [n 0
+                ascending true
                 seen #{}]
-      (let [raw-data (o/extract-page-products n)
-            new-product-codes (difference (set (map :product-code raw-data)) seen)
-            data (filter (fn [d] (new-product-codes (:product-code d))) raw-data)]
+      (let [page (o/extract-page (o/raw-page n ascending page-size))
+            product-list (o/extract-page-products page)
+            new-product-codes (difference (set (map :product-code product-list)) seen)
+            data (filter (fn [d] (new-product-codes (:product-code d))) product-list)]
 
         (a/onto-chan!! products-raw> data false)
         (swap! remaining into new-product-codes)
 
-        (if (seq raw-data)
-          (recur (inc n) (into seen new-product-codes))
-          (swap! remaining disj :more-products-coming))))
+        (h/safe-println {:info "got page"
+                         :n n
+                         :ascending ascending
+                         :count (count product-list)
+                         :new-count (count new-product-codes)})
+
+        ;; Scrape in ascending order of price, then once there are no
+        ;; products, scrape again with descending order of price.
+        ;; Need this because Lenovo website can't scrape more than 800
+        ;; products. See issue
+        ;; https://github.com/ackerleytng/logaze/issues/33. If there
+        ;; are more than 1600 products, this workaround will
+        ;; fail. Scraping slightly more than half ascending and
+        ;; descending in case of off-by-one issues. Not sure if
+        ;; num-pages from Lenovo's site is 0 or 1 based.
+        (if (and (seq product-list) (< n (/ (+ num-pages 3) 2)))
+          (recur (inc n) ascending (into seen new-product-codes))
+          (if ascending
+            (recur 0 (not ascending) (into seen new-product-codes))
+            (swap! remaining disj :more-products-coming)))))
 
     (a/pipeline-blocking
      parallelism products-enriched>
@@ -63,13 +85,13 @@
  :access-control-allow-methods [:get]))
 
 (comment
-  (def page-1 (o/extract-page-products 1))
+  (def raw-page-1 (o/raw-page 1))
 
-  (def product-0-page-1 (first page-1))
+  (o/extract-page-products (o/extract-page (o/raw-page 1)))
 
-  (def transformed (s/clean (t/transform-attributes (o/enrich-product product-0-page-1))))
-
-  (-> (o/extract-page-products 1)
+  (-> raw-page-1
+      (o/extract-page)
+      (o/extract-page-products)
       (first)
       (o/enrich-product)
       (t/transform-attributes)
