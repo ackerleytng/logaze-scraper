@@ -26,7 +26,6 @@
         ;; xf of channel applies after xf of pipeline function
         products-enriched> (a/chan (* 2 parallelism) (comp (map track)
                                                            (map t/transform-attributes)
-                                                           (filter :available)
                                                            (map s/clean)))
         num-pages (o/num-pages page-size)]
 

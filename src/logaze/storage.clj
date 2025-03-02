@@ -7,7 +7,8 @@
 
 (defn clean [product]
   (select-keys product
-               [:battery
+               [:available
+                :battery
                 :brand
                 :camera
                 :display
