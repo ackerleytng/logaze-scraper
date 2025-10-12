@@ -15,3 +15,5 @@ pom.xml.asc
 .nrepl-port
 .cpcache/
 .clj-kondo/
+.lein-env
+profiles.clj

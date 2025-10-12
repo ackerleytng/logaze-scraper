@@ -1,9 +1,7 @@
 (ns logaze.storage
-  (:require [clj-http.client :as client]
-            [cheshire.core :refer [generate-string]]))
-
-(def storage-api-0 "https://jsonblob.com/api/jsonBlob/1104252648328282112")
-(def storage-api-1 "https://jsonblob.com/api/jsonBlob/1104252815584542720")
+  (:require [cheshire.core :refer [generate-string]]
+            [amazonica.aws.s3 :as s3]
+            [environ.core :refer [env]]))
 
 (defn clean [product]
   (select-keys product
@@ -41,14 +39,24 @@
                 :weight
                 :wlan]))
 
+(def cred {:access-key (env :access-key)
+           :secret-key (env :secret-key)
+           :endpoint (env :endpoint)})
+
 (defn save [data location]
-  (client/put
-   location
-   {:body (generate-string data) :content-type :json})
+  (s3/put-object cred "logaze" location (generate-string data))
   (println (str "Posted " (count data) " entries to " location)))
 
 (defn post [data]
   (let [half (/ (count data) 2)]
     ;; Put data to two places to avoid timeouts on each put
-    (save (take half data) storage-api-0)
-    (save (drop half data) storage-api-1)))
+    (save (take half data) "part-0")
+    (save (drop half data) "part-1")))
+
+(comment
+
+  ;; TODO throttle scraping based on last-modified time
+  (-> (s3/get-object-metadata cred "logaze" "part-0")
+      :last-modified)
+
+  )
