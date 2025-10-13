@@ -10,9 +10,11 @@
                  [org.clojure/core.async "1.6.673"]
                  [slingshot "0.12.2"]
                  [amazonica "0.3.168"]
-                 [environ "1.2.0"]]
+                 [environ "1.2.0"]
+                 [clojure.java-time "1.4.3"]]
   :ring {:handler logaze.core/handler}
   :plugins [[lein-ring "0.12.6"]
             [lein-eftest "0.6.0"]
             [lein-environ "1.2.0"]]
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:dev [:profiles/dev]
+             :uberjar {:aot :all}})

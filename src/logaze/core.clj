@@ -5,7 +5,9 @@
             [logaze.helpers :as h]
             [clojure.set :refer [difference]]
             [clojure.core.async :as a]
-            [ring.middleware.cors :refer [wrap-cors]]))
+            [ring.middleware.cors :refer [wrap-cors]]
+            [environ.core :refer [env]]
+            [java-time.api :as jt]))
 
 (defn do-scraping []
   (let [page-size 40
@@ -68,20 +70,29 @@
 
     (->> (persistent! (a/<!! (a/reduce conj! (transient []) products-enriched>))))))
 
+(defn should-scrape [uri]
+  (let [now (jt/zoned-date-time)
+        last (jt/zoned-date-time (s/last-scrape-time))]
+    (println {:uri uri
+              :now now
+              :last last})
+    (or (and (= "/" uri)
+             (jt/after? now (jt/plus last (jt/hours 1))))
+        (= (env :force-scrape-path) uri))))
+
 (defn scrape-handler [request]
-  (println {:request-uri (:uri request)})
-  (when (= "/" (:uri request))
+  (when (should-scrape (:uri request))
     (a/thread (s/post (do-scraping))))
   {:status 200
    :headers {"Content-Type" "text/plain"}
    :body "Done!"})
 
 (def handler
-(wrap-cors
- scrape-handler
- :access-control-allow-origin [#"http://localhost:?\d*/?"
-                               #"https://ackerleytng.github.io/?"]
- :access-control-allow-methods [:get]))
+  (wrap-cors
+   scrape-handler
+   :access-control-allow-origin [#"http://localhost:?\d*/?"
+                                 #"https://ackerleytng.github.io/?"]
+   :access-control-allow-methods [:get]))
 
 (comment
   (def raw-page-1 (o/raw-page 1))

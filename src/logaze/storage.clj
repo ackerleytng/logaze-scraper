@@ -1,7 +1,8 @@
 (ns logaze.storage
   (:require [cheshire.core :refer [generate-string]]
             [amazonica.aws.s3 :as s3]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]]
+            [java-time.api :as jt]))
 
 (defn clean [product]
   (select-keys product
@@ -53,10 +54,6 @@
     (save (take half data) "part-0")
     (save (drop half data) "part-1")))
 
-(comment
-
-  ;; TODO throttle scraping based on last-modified time
+(defn last-scrape-time []
   (-> (s3/get-object-metadata cred "logaze" "part-0")
-      :last-modified)
-
-  )
+      :last-modified))
