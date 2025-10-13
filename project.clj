@@ -1,7 +1,7 @@
 (defproject logaze "0.1.0-SNAPSHOT"
   :uberjar-name "logaze.jar"
-  :min-lein-version "2.0.0"
-  :dependencies [[org.clojure/clojure "1.11.1"]
+  :min-lein-version "2.12.0"
+  :dependencies [[org.clojure/clojure "1.12.3"]
                  [ring "1.9.6"]
                  [ring-cors "0.1.13"]
                  [enlive "1.1.6"]
