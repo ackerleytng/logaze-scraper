@@ -31,7 +31,7 @@
                                                            (map s/clean)))
         num-pages (o/num-pages page-size)]
 
-    (a/go-loop [n 0
+    (a/go-loop [n 1
                 ascending true
                 seen #{}]
       (let [page (o/extract-page (o/raw-page n ascending page-size))
@@ -54,13 +54,12 @@
         ;; products. See issue
         ;; https://github.com/ackerleytng/logaze/issues/33. If there
         ;; are more than 1600 products, this workaround will
-        ;; fail. Scraping slightly more than half ascending and
-        ;; descending in case of off-by-one issues. Not sure if
-        ;; num-pages from Lenovo's site is 0 or 1 based.
-        (if (and (seq product-list) (< n (/ (+ num-pages 3) 2)))
+        ;; fail.
+        ;; num-pages from Lenovo's site is 1 based.
+        (if (and (seq product-list) (<= n num-pages))
           (recur (inc n) ascending (into seen new-product-codes))
           (if ascending
-            (recur 0 (not ascending) (into seen new-product-codes))
+            (recur 1 (not ascending) (into seen new-product-codes))
             (swap! remaining disj :more-products-coming)))))
 
     (a/pipeline-blocking

@@ -52,7 +52,7 @@
      (:body (client/get url params)))))
 
 (defn num-pages [page-size]
-  (-> (raw-page 0 true page-size)
+  (-> (raw-page 1 true page-size)
       (parse-string keywordize)
       (get-in [:data :page-count])))
 
