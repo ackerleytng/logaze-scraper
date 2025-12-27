@@ -72,9 +72,9 @@
 (defn should-scrape [uri]
   (let [now (jt/zoned-date-time)
         last (jt/zoned-date-time (s/last-scrape-time))]
-    (println {:uri uri
-              :now now
-              :last last})
+    (h/safe-println {:uri uri
+                     :now now
+                     :last last})
     (or (and (= "/" uri)
              (jt/after? now (jt/plus last (jt/hours 1))))
         (= (env :force-scrape-path) uri))))

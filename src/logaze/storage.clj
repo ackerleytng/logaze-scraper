@@ -2,7 +2,8 @@
   (:require [cheshire.core :refer [generate-string]]
             [amazonica.aws.s3 :as s3]
             [environ.core :refer [env]]
-            [java-time.api :as jt]))
+            [java-time.api :as jt]
+            [logaze.helpers :as h]))
 
 (defn clean [product]
   (select-keys product
@@ -46,7 +47,7 @@
 
 (defn save [data location]
   (s3/put-object cred "logaze" location (generate-string data))
-  (println (str "Posted " (count data) " entries to " location)))
+  (h/safe-println (str "Posted " (count data) " entries to " location)))
 
 (defn post [data]
   (let [half (/ (count data) 2)]
