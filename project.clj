@@ -11,7 +11,8 @@
                  [com.cognitect.aws/endpoints "871.2.40.14"]
                  [com.cognitect.aws/s3 "871.2.40.9"]
                  [environ "1.2.0"]
-                 [clojure.java-time "1.4.3"]]
+                 [clojure.java-time "1.4.3"]
+                 [dev.weavejester/medley "1.9.0"]]
   :ring {:handler logaze.core/handler}
   :plugins [[lein-ring "0.12.6"]
             [lein-eftest "0.6.0"]

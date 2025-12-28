@@ -5,69 +5,56 @@
             [logaze.helpers :as h]
             [clojure.set :refer [difference]]
             [clojure.core.async :as a]
+            [medley.core :refer [distinct-by]]
             [ring.middleware.cors :refer [wrap-cors]]
             [environ.core :refer [env]]
             [java-time.api :as jt]))
 
-(defn do-scraping []
-  (let [page-size 40
-        parallelism 4
-        ;; Track the product codes that need to be enriched
+(def scrape-page-size 40)
 
-        ;; :more-products-coming is a sentinel to indicate that there may be more products to list
-        ;; Without :more-products-coming, if enriching products goes more quickly than extracting
-        ;; products from a page, scraping may terminate prematurely.
-        remaining (atom #{:more-products-coming})
-        products-raw> (a/chan (* 2 parallelism))
-        ;; Close channel only when product codes have been retrieved
-        track (fn [item]
-                (let [next-remaining (swap! remaining disj (:product-code item))]
-                  (when (empty? next-remaining)
-                    (a/close! products-raw>)))
-                item)
-        ;; xf of channel applies after xf of pipeline function
-        products-enriched> (a/chan (* 2 parallelism) (comp (map track)
-                                                           (map t/transform-attributes)
-                                                           (map s/clean)))
-        num-pages (o/num-pages page-size)]
+(defn- scrape-page [page-size {:keys [page ascending]}]
+  (let [product-list (-> (o/raw-page page ascending page-size)
+                         (o/extract-page)
+                         (o/extract-page-products))]
+    (h/safe-println {:info "got page"
+                     :page page
+                     :ascending ascending
+                     :count (count product-list)})
+    product-list))
 
-    (a/go-loop [n 1
-                ascending true
-                seen #{}]
-      (let [page (o/extract-page (o/raw-page n ascending page-size))
-            product-list (o/extract-page-products page)
-            new-product-codes (difference (set (map :product-code product-list)) seen)
-            data (filter (fn [d] (new-product-codes (:product-code d))) product-list)]
+(defn parallel-scrape [page-size inputs]
+  (let [parallelism 4
 
-        (a/onto-chan!! products-raw> data false)
-        (swap! remaining into new-product-codes)
+        page-queries> (a/to-chan! inputs)
+        products-raw> (a/chan (* 2 parallelism) (distinct-by :product-code))
+        products-enriched> (a/chan (* 2 parallelism) (comp
+                                                      (map t/transform-attributes)
+                                                      (map s/clean)))]
 
-        (h/safe-println {:info "got page"
-                         :n n
-                         :ascending ascending
-                         :count (count product-list)
-                         :new-count (count new-product-codes)})
+    (a/pipeline-blocking parallelism products-raw>
+                         (mapcat #(scrape-page page-size %))
+                         page-queries>)
 
-        ;; Scrape in ascending order of price, then once there are no
-        ;; products, scrape again with descending order of price.
-        ;; Need this because Lenovo website can't scrape more than 800
-        ;; products. See issue
-        ;; https://github.com/ackerleytng/logaze/issues/33. If there
-        ;; are more than 1600 products, this workaround will
-        ;; fail.
-        ;; num-pages from Lenovo's site is 1 based.
-        (if (and (seq product-list) (<= n num-pages))
-          (recur (inc n) ascending (into seen new-product-codes))
-          (if ascending
-            (recur 1 (not ascending) (into seen new-product-codes))
-            (swap! remaining disj :more-products-coming)))))
+    (a/pipeline-blocking parallelism products-enriched>
+                         (map o/enrich-product)
+                         products-raw>)
 
-    (a/pipeline-blocking
-     parallelism products-enriched>
-     (map o/enrich-product)
-     products-raw>)
+    (a/<!! (a/into [] products-enriched>))))
 
-    (->> (persistent! (a/<!! (a/reduce conj! (transient []) products-enriched>))))))
+(defn do-scraping [page-size]
+  (let [num-pages (o/num-pages page-size)
+        base-inputs (map (fn [page] {:page page :ascending true}) (range 1 (inc num-pages)))
+        inputs (if (<= num-pages 800)
+                 base-inputs
+                 (into base-inputs (map (fn [page] {:page page :ascending false}) (range 1 (inc num-pages)))))]
+
+    ;; Lenovo website can't query more than 800 products (or 20
+    ;; pages). See issue https://github.com/ackerleytng/logaze/issues/33.
+    (if (> num-pages 20)
+      (h/safe-println {:warning "more than 20 pages of products, scraping will be incomplete"}))
+
+    (h/safe-println {:info "all inputs" :inputs inputs})
+    (parallel-scrape page-size inputs)))
 
 (defn should-scrape [uri]
   (let [now (jt/zoned-date-time)
@@ -81,7 +68,7 @@
 
 (defn scrape-handler [request]
   (when (should-scrape (:uri request))
-    (a/thread (s/post (do-scraping))))
+    (a/thread (s/post (do-scraping scrape-page-size))))
   {:status 200
    :headers {"Content-Type" "text/plain"}
    :body "Done!"})
@@ -106,10 +93,12 @@
       (t/transform-attributes)
       (s/clean))
 
-  (def l (do-scraping))
+  (def scraped (do-scraping scrape-page-size))
 
-  (count l)
+  (count scraped)
 
-  (s/post l)
+  (first scraped)
+
+  (s/post scraped)
 
   )
