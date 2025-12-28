@@ -1,6 +1,8 @@
 (ns logaze.storage
   (:require [cheshire.core :refer [generate-string]]
-            [amazonica.aws.s3 :as s3]
+            [clojure.java.io :as io]
+            [cognitect.aws.client.api :as aws]
+            [cognitect.aws.credentials :as creds]
             [environ.core :refer [env]]
             [java-time.api :as jt]
             [logaze.helpers :as h]))
@@ -41,13 +43,25 @@
                 :weight
                 :wlan]))
 
-(def cred {:access-key (env :access-key)
-           :secret-key (env :secret-key)
-           :endpoint (env :endpoint)})
+(def credentials-provider
+  (when-not *compile-files*
+    (creds/basic-credentials-provider
+     {:access-key-id  (env :access-key)
+      :secret-access-key  (env :secret-key)})))
+
+(def s3
+  (when-not *compile-files*
+    (aws/client {:api :s3
+                 ;; See https://github.com/cognitect-labs/aws-api/issues/150
+                 :region "us-east-1"
+                 :credentials-provider credentials-provider
+                 :endpoint-override {:hostname (env :endpoint)
+                                     :protocol :https}})))
 
 (defn save [data location]
-  (s3/put-object cred "logaze" location (generate-string data))
-  (h/safe-println (str "Posted " (count data) " entries to " location)))
+  (aws/invoke s3 {:op :PutObject :request {:Bucket "logaze" :Key location
+                                           :Body (.getBytes (generate-string data))}})
+  (h/safe-println {:info "posted" :count (count data) :first (generate-string (first data)) :location location}))
 
 (defn post [data]
   (let [half (/ (count data) 2)]
@@ -56,5 +70,5 @@
     (save (drop half data) "part-1")))
 
 (defn last-scrape-time []
-  (-> (s3/get-object-metadata cred "logaze" "part-0")
+  (-> (aws/invoke s3 {:op :GetObject :request {:Bucket "logaze" :Key "part-0"}})
       :last-modified))

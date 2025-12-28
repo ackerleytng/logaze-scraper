@@ -5,9 +5,11 @@
                  [ring "1.9.6"]
                  [ring-cors "0.1.13"]
                  [clj-http "3.12.3"]
-                 [amazonica "0.3.168"]
                  [cheshire "6.1.0"]
                  [org.clojure/core.async "1.8.741"]
+                 [com.cognitect.aws/api "0.8.774"]
+                 [com.cognitect.aws/endpoints "871.2.40.14"]
+                 [com.cognitect.aws/s3 "871.2.40.9"]
                  [environ "1.2.0"]
                  [clojure.java-time "1.4.3"]]
   :ring {:handler logaze.core/handler}
