@@ -1,13 +1,13 @@
 (defproject logaze "0.1.0-SNAPSHOT"
   :uberjar-name "logaze.jar"
   :min-lein-version "2.12.0"
-  :dependencies [[org.clojure/clojure "1.12.3"]
+  :dependencies [[org.clojure/clojure "1.12.4"]
                  [ring "1.9.6"]
                  [ring-cors "0.1.13"]
                  [clj-http "3.12.3"]
-                 [cheshire "5.11.0"]
-                 [org.clojure/core.async "1.6.673"]
                  [amazonica "0.3.168"]
+                 [cheshire "6.1.0"]
+                 [org.clojure/core.async "1.8.741"]
                  [environ "1.2.0"]
                  [clojure.java-time "1.4.3"]]
   :ring {:handler logaze.core/handler}
