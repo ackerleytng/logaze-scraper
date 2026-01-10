@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM clojure:lein AS builder
+FROM clojure:temurin-25-lein-trixie-slim AS builder
 WORKDIR /tmp/
 COPY . .
 RUN lein ring uberjar
