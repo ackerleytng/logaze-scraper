@@ -71,4 +71,4 @@
 
 (defn last-scrape-time []
   (-> (aws/invoke s3 {:op :GetObject :request {:Bucket "logaze" :Key "part-0"}})
-      :last-modified))
+      :LastModified))
