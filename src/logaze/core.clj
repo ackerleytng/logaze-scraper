@@ -10,7 +10,8 @@
             [environ.core :refer [env]]
             [java-time.api :as jt]))
 
-(def scrape-page-size 40)
+(def scrape-page-size o/max-page-size)
+(def max-page-index o/max-page-index)
 
 (defn- scrape-page [page-size {:keys [page ascending]}]
   (let [product-list (-> (o/raw-page page ascending page-size)
@@ -43,15 +44,17 @@
 
 (defn do-scraping [page-size]
   (let [num-pages (o/num-pages page-size)
-        base-inputs (map (fn [page] {:page page :ascending true}) (range 1 (inc num-pages)))
-        inputs (if (<= num-pages 800)
+        clamped-pages (min max-page-index num-pages)
+        base-inputs (map (fn [page] {:page page :ascending true}) (range 1 (inc clamped-pages)))
+        inputs (if (<= num-pages max-page-index)
                  base-inputs
-                 (into base-inputs (map (fn [page] {:page page :ascending false}) (range 1 (inc num-pages)))))]
+                 (into base-inputs (map (fn [page] {:page page :ascending false}) (range 1 (inc clamped-pages)))))]
 
-    ;; Lenovo website can't query more than 800 products (or 20
-    ;; pages). See issue https://github.com/ackerleytng/logaze/issues/33.
-    (if (> num-pages 20)
-      (h/safe-println {:warning "more than 20 pages of products, scraping will be incomplete"}))
+    ;; Lenovo website can't query more than 800 products (or 20 pages) per sort direction.
+    ;; With both ascending and descending sorts, we can cover up to 40 pages (1600 products).
+    ;; See issue https://github.com/ackerleytng/logaze/issues/33.
+    (if (> num-pages (* 2 max-page-index))
+      (h/safe-println {:warning (str "more than " (* 2 max-page-index) " pages of products, scraping will be incomplete")}))
 
     (h/safe-println {:info "all inputs" :inputs inputs})
     (parallel-scrape page-size inputs)))

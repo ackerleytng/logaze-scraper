@@ -26,10 +26,13 @@
             {(keywordize key) (string/trim (string/replace value #"<.*?>" ""))})
           classification)))
 
+(def max-page-size 40)
+(def max-page-index 20)
+
 (defn raw-page
   "Get page number n of the laptops at lenovo's outlet website, with a page-size of page-size, as a string"
-  ([n] (raw-page n true 40))
-  ([n sort-ascending] (raw-page n sort-ascending 40))
+  ([n] (raw-page n true max-page-size))
+  ([n sort-ascending] (raw-page n sort-ascending max-page-size))
   ([n sort-ascending page-size]
    (let [url "https://openapi.lenovo.com/us/outletus/en/ofp/search/dlp/product/query/get/_tsc"
          ;; This represents the type of products (laptops, desktops, etc)
